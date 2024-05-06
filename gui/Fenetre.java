@@ -5,27 +5,41 @@ import java.util.HashMap;
 import java.util.Set;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 
+import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.JOptionPane;
 
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
+
 import org.graphstream.ui.swing_viewer.SwingViewer;
 import org.graphstream.ui.view.Viewer;
 import org.graphstream.ui.view.ViewerPipe;
+
+import com.itextpdf.io.image.ImageDataFactory;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Image;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 
 import algo.GraphServer;
 import algo.Server;
 
 public class Fenetre extends JFrame{
-    private JButton createServer, addEdge, importGraph, findShortestPath;
+    private JButton createServer, addEdge, importGraph, findShortestPath, exportPdf;
     private Graph graph;
     private Viewer viewer;
     private ViewerPipe pipeIn;
@@ -47,6 +61,7 @@ public class Fenetre extends JFrame{
         toolBar.add(addEdge);
         toolBar.add(importGraph);
         toolBar.add(findShortestPath);
+        toolBar.add(exportPdf);
         
         setSize(800,800);
         setLocationRelativeTo(null);
@@ -63,10 +78,11 @@ public class Fenetre extends JFrame{
     }
 
     public void init(){
-        createServer = new JButton("add Server");
+        createServer = new JButton("Add Server");
         addEdge = new JButton("Add edge");
         importGraph = new JButton("Import from file");
         findShortestPath = new JButton("Find Path");
+        exportPdf = new JButton("Export to pdf");
         graph = new SingleGraph("Network Simulator");
         viewer = new SwingViewer( graph, SwingViewer.ThreadingModel.GRAPH_IN_GUI_THREAD );
         pipeIn = viewer.newViewerPipe();
@@ -132,6 +148,37 @@ public class Fenetre extends JFrame{
 
         findShortestPath.addActionListener(evt -> {
             SwingUtilities.invokeLater(() -> new FindPathModal(this, "Find shortest path"));
+        });
+
+        exportPdf.addActionListener(evt -> {
+            BufferedImage image = new BufferedImage(view.getWidth(), view.getHeight(), BufferedImage.TYPE_INT_RGB);
+            view.paint(image.createGraphics());
+            JFileChooser saveModal = new JFileChooser(new File("screenshots"));
+ 
+            try {           
+                saveModal.setDialogTitle("Export to pdf");
+                saveModal.setFileFilter(new FileNameExtensionFilter("pdf files", "pdf"));
+                
+                int result = saveModal.showSaveDialog(this);
+
+                if(result == JFileChooser.APPROVE_OPTION){
+                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                    ImageIO.write(image, "png", bytes);
+                    bytes.flush();
+                    byte[] imageBytes = bytes.toByteArray();
+                    bytes.close();
+                    
+                    PdfDocument pdfDoc = new PdfDocument(new PdfWriter (new FileOutputStream(saveModal.getSelectedFile())));
+                    Document document = new Document(pdfDoc);
+                    Image img = new Image(ImageDataFactory.create(imageBytes));
+                    
+                    document.add(img);
+                    document.close();
+                    System.out.printf("Screenshot saved as %s\n",saveModal.getSelectedFile().getName());
+                }
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
         });
     }
 
