@@ -1,13 +1,12 @@
-import java.io.IOException;
+import javax.swing.UIManager;
+import javax.swing.plaf.nimbus.NimbusLookAndFeel;
+
+import gui.Fenetre;
 
 public class Main {
-    public static void main(String... args){
-        try{
-            Graph graph = new Graph("graph.txt");
+     public static void main(String[] args) throws Exception{
+        UIManager.setLookAndFeel(new NimbusLookAndFeel());
 
-            graph.getShortestPath("8.8.8.0", "8.8.8.4");
-        } catch(IOException e){
-            e.printStackTrace();
-        }
+        new Fenetre();
     }
 }
