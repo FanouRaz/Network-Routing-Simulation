@@ -17,9 +17,8 @@ public class AddEdgeModal extends JDialog{
     public AddEdgeModal(Fenetre parent, String title){
         super(parent,title,false);
 
-        JLabel sourceLabel = new JLabel("From:");
-        JComboBox<String> sourceField = new JComboBox<>(parent.getServersIp());
-
+        JLabel sourceLabel = new JLabel(String.format(" From: %s", parent.getSelectedServer().getIpAddress()));
+        
         JLabel destLabel = new JLabel("To:");
         JComboBox<String> destField = new JComboBox<>(parent.getServersIp());
 
@@ -42,7 +41,6 @@ public class AddEdgeModal extends JDialog{
         JPanel btnPane = new JPanel();
 
         sourceForm.add(sourceLabel);
-        sourceForm.add(sourceField);
         
         destForm.add(destLabel);
         destForm.add(destField);
@@ -68,10 +66,9 @@ public class AddEdgeModal extends JDialog{
         setLocationRelativeTo(null);
         
         confirm.addActionListener(e -> {
-            //System.out.printf("{\n\t'ipAdress' : '%s',\n\t'DomainName' : '%s'\n}\n",ipField.getText(),dnField.getText());
+            parent.addEdge(parent.getSelectedServer().getIpAddress(), (String) destField.getSelectedItem(), Integer.valueOf(weightField.getText()));
             
-           // ((Fenetre) parent).addNode(ipField.getText(), dnField.getText());
-            parent.addEdge((String) sourceField.getSelectedItem(), (String) destField.getSelectedItem(), Integer.valueOf(weightField.getText()));
+            parent.deselect();
             setVisible(false);
         });
     }

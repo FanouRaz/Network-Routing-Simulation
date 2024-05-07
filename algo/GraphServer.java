@@ -14,16 +14,14 @@ public class GraphServer {
     + "graph {"
     + "	canvas-color: white;  "
     + "	fill-mode: gradient-radial; "
-   // + "	fill-color: white, #EEEEEE;"
+    //+ "	fill-color: white, #EEEEEE;"
     + "	padding: 60px; "
     + "}"
     + ""	
     + "node {"
-    + " size: 30px;"
+    + " size: 50px;"
     + " fill-mode: plain;"
     + " fill-color: #CCCC;"
-    + " fill-mode: image-scaled;"
-    + " fill-image: url('assets/server.png');"
     + " text-alignment: under;"
     + " text-color: white;"
     + " text-style: bold;"
@@ -32,15 +30,19 @@ public class GraphServer {
     + " text-padding: 1.5px;"
     + " text-offset: 0px, 2px;"
     + "}"
+    + "node.up {"
+    + " fill-mode: image-scaled;"
+    + " fill-image: url('assets/server-opened.png');"
+    + "}"
+    + ""
+    + "node.down {"
+    + " fill-mode: image-scaled;"
+    + " fill-image: url('assets/server-closed.png');"
+    + "}"
     + ""
     + "node:clicked { "
     + "	stroke-mode: plain;"
     + "	stroke-color: red;"
-    + "}"
-    + ""
-    + "node:selected { "
-    + "	stroke-mode: plain; "
-    + "	stroke-color: blue; "
     + "}"
     + ""
     + "edge.marked {" 
@@ -48,8 +50,14 @@ public class GraphServer {
     + " fill-mode: plain;"
     + "}"
     + ""
-    + "edge { 	shape: line; size: 1px; fill-color: grey; 	fill-mode: plain; } ";
-   
+    + "edge { "
+    + " shape: line;"
+    + " size: 1px;"
+    + " text-size: 10px;"
+    + " text-alignment: above;"
+    + " fill-color: grey;"
+    + " fill-mode: plain;"
+    + "}";
     public static final String URL_IMAGE = "assets/server.png";
 
     private ArrayList<Server> nodes; 
@@ -104,6 +112,9 @@ public class GraphServer {
             this.nodes = new ArrayList<>();
     }
 
+    /*
+     * Retourne le chemin le plus court partant de startIp vers destIp
+     */
     public ArrayList<String> getShortestPath(String startIp, String destIp){
         HashMap<Server, Integer> distance = new HashMap<>();
         HashMap<Server, Server> prev = new HashMap<>();
@@ -160,6 +171,26 @@ public class GraphServer {
         }
     }
 
+    /*
+     * Recherche le chemin optimal partant de startIp vers une liste de destinations
+     */
+    public ArrayList<String> getShortestPath(String startIp, ArrayList<String> destinations){
+        ArrayList<String> shortestPath = getShortestPath(startIp, destinations.get(0));
+
+        for(int i=1; i<destinations.size(); i++){
+            ArrayList<String> temp = getShortestPath(startIp, destinations.get(i));
+            
+            if(getPathLength(temp) < getPathLength(shortestPath))
+                shortestPath = temp;
+        }
+           
+
+        return shortestPath;
+    }
+
+    /*
+     * Retrace le chemin partant de startServer vers destServer
+     */
     public ArrayList<String> findPath(Server startServer, Server destServer, HashMap<Server, Server> prev){
         ArrayList<String> path = new ArrayList<>();
 
@@ -172,6 +203,22 @@ public class GraphServer {
         }
 
         return path;
+    }
+
+    /*
+     * Retourne la longueur du chemin proposer
+     */
+    public int getPathLength(ArrayList<String> path){
+        int len = 0;
+
+        for(int i=0; i<path.size()-1; i++){
+            Server s1 = findServerByIpAdress(path.get(i)).orElse(null);
+            Server s2 = findServerByIpAdress(path.get(i+1)).orElse(null);
+
+            len += s2.getDistFromReachableServer(s1);
+        }
+
+        return len;
     }
 
     public void showAdjacencyList(){

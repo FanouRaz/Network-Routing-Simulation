@@ -13,15 +13,13 @@ import java.awt.Dimension;
 
 
 public class FindPathModal extends JDialog{
-    public FindPathModal(Fenetre parent, String title){
+    public FindPathModal(Fenetre parent, String title, boolean toDN){
         super(parent,title,false);
 
-        JLabel sourceLabel = new JLabel("From:");
-        JComboBox<String> sourceField = new JComboBox<>(parent.getServersIp());
+        JLabel sourceLabel = new JLabel(" Path from: " + parent.getSelectedServer().getIpAddress());
 
-        JLabel destLabel = new JLabel("To:");
-        JComboBox<String> destField = new JComboBox<>(parent.getServersIp());
-
+        JLabel destLabel = new JLabel("To the domain name:");
+        JComboBox<String> destField = new JComboBox<>(toDN ? parent.getAllDomainName() : parent.getServersIp());
 
         JButton confirm = new JButton("Confirm");
 
@@ -38,7 +36,7 @@ public class FindPathModal extends JDialog{
         JPanel btnPane = new JPanel();
 
         sourceForm.add(sourceLabel);
-        sourceForm.add(sourceField);
+
         
         destForm.add(destLabel);
         destForm.add(destField);
@@ -59,8 +57,11 @@ public class FindPathModal extends JDialog{
         setLocationRelativeTo(null);
         
         confirm.addActionListener(e -> {
-            parent.showPath((String)sourceField.getSelectedItem(),(String)destField.getSelectedItem());
-       
+            if(toDN)
+                parent.showPathToDN(parent.getSelectedServer().getIpAddress(),(String)destField.getSelectedItem());
+            else
+                parent.showPathToIP(parent.getSelectedServer().getIpAddress(),(String)destField.getSelectedItem());
+            parent.deselect();
             setVisible(false);
         });
     }

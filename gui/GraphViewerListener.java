@@ -11,12 +11,14 @@ public class GraphViewerListener implements ViewerListener {
 
     @Override
     public void buttonPushed(String id) {
-        System.out.println(id+" clicked!");
-        fenetre.selectServer(id);
+        System.out.println(id+" selectionné!");
     }
 
     @Override
-    public void buttonReleased(String arg0) {}
+    public void buttonReleased(String id) {
+        fenetre.selectServer(id);
+        fenetre.displayPopUp();
+    }
 
     @Override
     public void mouseLeft(String arg0) {}
