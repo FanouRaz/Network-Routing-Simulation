@@ -137,35 +137,42 @@ public class GraphServer {
 
         queue.add(startServer);
 
-        while(!queue.isEmpty() && !done.get(destServer)){
-            Server current = queue.remove();
-            
-            for(Server neighbor : current.getAllReachableServer()){
-                if(!done.get(neighbor)){
-                    if(distance.get(current) + current.getDistFromReachableServer(neighbor) < distance.get(neighbor) && neighbor.getIsUp()){
-                        distance.replace(neighbor,distance.get(current) + current.getDistFromReachableServer(neighbor));
-                        prev.replace(neighbor, current);
+        if(destServer != null){
+            while(!queue.isEmpty() && !done.get(destServer)){
+                Server current = queue.remove();
+                
+                for(Server neighbor : current.getAllReachableServer()){
+                    if(!done.get(neighbor)){
+                        if(distance.get(current) + current.getDistFromReachableServer(neighbor) < distance.get(neighbor) && neighbor.getIsUp()){
+                            distance.replace(neighbor,distance.get(current) + current.getDistFromReachableServer(neighbor));
+                            prev.replace(neighbor, current);
+                        }
+    
+                        if(!queue.contains(neighbor) && neighbor.getIsUp())
+                            queue.add(neighbor);
                     }
-
-                    if(!queue.contains(neighbor) && neighbor.getIsUp())
-                        queue.add(neighbor);
+    
+                    done.replace(current,true);
                 }
-
-                done.replace(current,true);
+            }
+    
+    
+            if(prev.get(findServerByIpAdress(destIp).orElse(null)) == null && !destIp.equals(startIp)){
+                System.out.printf("Pas de chemin allant de %s vers %s", startIp, destIp);
+                return new ArrayList<>();
+            }
+    
+            else{
+                ArrayList<String> path = findPath(startServer, destServer, prev);
+                System.out.printf("%s : %dms -> %s\n",destIp,distance.get(destServer),path); 
+        
+                return path;
             }
         }
 
-
-        if(prev.get(findServerByIpAdress(destIp).orElse(null)) == null && !destIp.equals(startIp)){
-            System.out.printf("Pas de chemin allant de %s vers %s", startIp, destIp);
+        else {
+            System.out.println("Le serveur que vous recherchez n'existe pas");
             return new ArrayList<>();
-        }
-
-        else{
-            ArrayList<String> path = findPath(startServer, destServer, prev);
-            System.out.printf("%s : %dms -> %s\n",destIp,distance.get(destServer),path); 
-    
-            return path;
         }
     }
 

@@ -2,12 +2,13 @@ package gui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JTextField;
-import javax.swing.JEditorPane;
+import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 
 
@@ -20,7 +21,7 @@ public class NavigateModal extends JDialog {
         JTextField searchForm = new JTextField("http://");
         JButton searchBtn = new JButton(new ImageIcon("assets/find.png"));
 
-        JEditorPane page = new JEditorPane();
+        JTextPane page = new JTextPane();
 
         String spinnerPath = getClass().getClassLoader()
                                        .getResource("assets/spinner.gif")
@@ -35,33 +36,11 @@ public class NavigateModal extends JDialog {
         
         page.setEditable(false);
 
-        page.setVisible(true);
 
         searchBtn.addActionListener(evt -> {
             String domainName = searchForm.getText().startsWith("http://") ? searchForm.getText().substring(7) : searchForm.getText();
-            String htmlDoc =
-            "<!DOCTYPE html>"
-           +"<html>"
-           +  "<head>"
-           +     "<title>"+domainName+"</title>"
-           +  "</head>"
-           +  "<body>"
-           +     "<p>Welcome to <strong>"+domainName+"</strong> page!</p>"
-           +  "</body>"
-           +"</html>" ;  
-
-           String notFoundHtml =
-            "<!DOCTYPE html>"
-           +"<html>"
-           +  "<head>"
-           +     "<title>Not Found</title>"
-           +  "</head>"
-           +  "<body>"
-           +     "<p style='margin-left:15px;'><strong>404 NOT FOUND</strong></p>"
-           +  "</body>"
-           +"</html>" ;  
-
-            boolean siteFound = parent.navigatorSearch(parent.getSelectedServer().getIpAddress(),domainName);
+             
+            ArrayList<String> pathToSite = parent.navigatorSearch(parent.getSelectedServer().getIpAddress(),domainName);
             
             page.setText(String.format("<html><div style='margin-left:50px; margin-top: 20px'><img src='%s'></div> </html>",spinnerPath)); 
             
@@ -71,8 +50,25 @@ public class NavigateModal extends JDialog {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-               
-                page.setText(siteFound ? htmlDoc : notFoundHtml);
+                
+                String htmlDoc = 
+                    "<!DOCTYPE html>"
+                    +"<html>"
+                    +  "<head>"
+                    +     "<title>Not Found</title>"
+                    +  "</head>"
+                    +  "<body>"
+                    +     "<p style='margin-left:15px;'><strong>404 NOT FOUND</strong></p>"
+                    +  "</body>"
+                    +"</html>" ;  
+
+                if(pathToSite != null)
+                    htmlDoc = parent.getGraphServer()
+                                           .findServerByIpAdress(pathToSite.getLast())
+                                           .orElse(null)
+                                           .getHtmlPageContent();
+                
+                page.setText(htmlDoc);
             }).start();
         });
         

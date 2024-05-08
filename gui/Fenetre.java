@@ -185,7 +185,7 @@ public class Fenetre extends JFrame{
         });
 
         navigate.addActionListener(evt -> {
-            SwingUtilities.invokeLater(() -> new NavigateModal(this, String.format("%s navigator",selected.getIpAddress()), String.format("<html>Welcome to <strong>%s</strong> navigator</html>", selected.getIpAddress())));
+            SwingUtilities.invokeLater(() -> new NavigateModal(this, String.format("%s's navigator",selected.getIpAddress()), String.format("<html>Welcome to <strong>%s</strong> navigator</html>", selected.getIpAddress())));
         });
 
         findPathIP.addActionListener(evt -> {
@@ -449,33 +449,25 @@ public class Fenetre extends JFrame{
             JOptionPane.showMessageDialog(null, String.format("The server %s is not reachable from %s",ipDest,ipSource),"Not reachable!",JOptionPane.INFORMATION_MESSAGE);
     }
 
-    public boolean navigatorSearch(String ipSource, String domainName){
-        if(dns.containsKey(domainName)){
-            ArrayList<String> path = graphServer.getShortestPath(ipSource, dns.get(domainName));
-    
-            graph.edges()
-                 .forEach(edge -> edge.setAttribute("ui.class", ""));     
-    
-            if(path.size() > 0){
-                /* for(int i=0; i<path.size()-1 ; i++){
-                    if(graph.getEdge(String.format("%s->%s",path.get(i),path.get(i+1))) != null)
-                        graph.getEdge(String.format("%s->%s",path.get(i),path.get(i+1)))
-                             .setAttribute("ui.class", "marked");
-                    else
-                        graph.getEdge(String.format("%s->%s",path.get(i+1),path.get(i)))
-                             .setAttribute("ui.class", "marked");
-    
-                    sleep(100);
-                }*/   
-                //JOptionPane.showMessageDialog(this, String.format("The nearest %s server is %s", domainName,path.getLast()),"Shortest Path",JOptionPane.INFORMATION_MESSAGE);
-                return true;
-            }
+    /*
+     * Recherche du chemin vers un url (nom de domaine ou ip)
+     */
+    public ArrayList<String> navigatorSearch(String ipSource, String url){
+        if(dns.containsKey(url)){
+            ArrayList<String> path = graphServer.getShortestPath(ipSource, dns.get(url));  
 
-            return false;
+            return path.size() != 0 ? path : null;
         }
 
-        else
-            return false;
+        else{
+            if(Server.isIpAdress(url)){
+                ArrayList<String> path = graphServer.getShortestPath(ipSource, url);
+                
+                return path.size() != 0 ? path : null;
+            }
+        }
+        
+        return null;
     }
 
 
@@ -493,4 +485,6 @@ public class Fenetre extends JFrame{
         JOptionPane.showMessageDialog(this, "Current graph saved successfully", "Saved successfully", JOptionPane.INFORMATION_MESSAGE);
         out.close();
     }
+
+    public GraphServer getGraphServer() { return graphServer; }
 }
