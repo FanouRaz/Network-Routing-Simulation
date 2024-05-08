@@ -65,6 +65,20 @@ public class Server{
 
     public void removeServerReachable(Server server) { reachableServer.remove(server); }
 
+    public static boolean isIpAdress(String str){
+        if(str.matches("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$")){
+            String[] bytes = str.split("\\.");
+
+            for(String bit : bytes){
+                if(Integer.valueOf(bit) < 0 || Integer.valueOf(bit) > 255)
+                    return false;
+            }
+
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public int hashCode(){
         return ipAddress.hashCode();

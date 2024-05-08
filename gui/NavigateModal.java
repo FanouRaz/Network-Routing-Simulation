@@ -38,14 +38,15 @@ public class NavigateModal extends JDialog {
         page.setVisible(true);
 
         searchBtn.addActionListener(evt -> {
+            String domainName = searchForm.getText().startsWith("http://") ? searchForm.getText().substring(7) : searchForm.getText();
             String htmlDoc =
             "<!DOCTYPE html>"
            +"<html>"
            +  "<head>"
-           +     "<title>"+searchForm.getText().substring(7)+"</title>"
+           +     "<title>"+domainName+"</title>"
            +  "</head>"
            +  "<body>"
-           +     "<p>Welcome to <strong>"+searchForm.getText().substring(7)+"</strong> page!</p>"
+           +     "<p>Welcome to <strong>"+domainName+"</strong> page!</p>"
            +  "</body>"
            +"</html>" ;  
 
@@ -60,7 +61,7 @@ public class NavigateModal extends JDialog {
            +  "</body>"
            +"</html>" ;  
 
-            boolean siteFound = parent.navigatorSearch(parent.getSelectedServer().getIpAddress(),searchForm.getText().substring(7));
+            boolean siteFound = parent.navigatorSearch(parent.getSelectedServer().getIpAddress(),domainName);
             
             page.setText(String.format("<html><div style='margin-left:50px; margin-top: 20px'><img src='%s'></div> </html>",spinnerPath)); 
             
