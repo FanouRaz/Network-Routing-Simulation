@@ -5,7 +5,7 @@ import javax.swing.JLabel;
 import javax.swing.JComboBox;
 import javax.swing.JButton;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.JSpinner;
 import javax.swing.BoxLayout;
 import javax.swing.BorderFactory;
 
@@ -23,7 +23,7 @@ public class AddEdgeModal extends JDialog{
         JComboBox<String> destField = new JComboBox<>(parent.getServersIp());
 
         JLabel weightFieldLabel = new JLabel("Weight:");
-        JTextField weightField = new JTextField(15);
+        JSpinner weightField = new JSpinner();
         
 
         JButton confirm = new JButton("Confirm");
@@ -66,7 +66,7 @@ public class AddEdgeModal extends JDialog{
         setLocationRelativeTo(null);
         
         confirm.addActionListener(e -> {
-            parent.addEdge(parent.getSelectedServer().getIpAddress(), (String) destField.getSelectedItem(), Integer.valueOf(weightField.getText()));
+            parent.addEdge(parent.getSelectedServer().getIpAddress(), (String) destField.getSelectedItem(), (Integer)weightField.getValue());
             
             parent.deselect();
             setVisible(false);

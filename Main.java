@@ -1,11 +1,12 @@
 import javax.swing.UIManager;
-import javax.swing.plaf.nimbus.NimbusLookAndFeel;
+
+import com.formdev.flatlaf.themes.FlatMacLightLaf;
 
 import gui.Fenetre;
 
 public class Main {
      public static void main(String[] args) throws Exception{
-        UIManager.setLookAndFeel(new NimbusLookAndFeel());
+        UIManager.setLookAndFeel(new FlatMacLightLaf());
 
         new Fenetre();
     }

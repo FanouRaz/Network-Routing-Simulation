@@ -52,7 +52,7 @@ public class Fenetre extends JFrame{
     private HashMap<String, ArrayList<String>> dns;
     private GraphServer graphServer;
     private JPopupMenu popUpMenu;
-    private JMenuItem startOrShutdown, removeServer, addEdge, findPathDN, findPathIP;
+    private JMenuItem startOrShutdown, removeServer, addEdge, navigate, findPathIP;
     private Server selected;
     
     public Fenetre() throws IOException{
@@ -72,7 +72,7 @@ public class Fenetre extends JFrame{
         popUpMenu.add(startOrShutdown); 
         popUpMenu.add(removeServer);
         popUpMenu.add(addEdge);
-        popUpMenu.add(findPathDN);
+        popUpMenu.add(navigate);
         popUpMenu.add(findPathIP); 
         
         setSize(800,800);
@@ -108,8 +108,8 @@ public class Fenetre extends JFrame{
         startOrShutdown = new JMenuItem("start/shutdown server");
         removeServer = new JMenuItem("Remove server");
         addEdge = new JMenuItem("Add Edge");
-        findPathDN = new JMenuItem("Find Shortest Path (Domain Name)");
-        findPathIP = new JMenuItem("Find Shortest Path (IP Adress)");
+        navigate = new JMenuItem("Navigate");
+        findPathIP = new JMenuItem("Find Shortest Path");
 
         createServer.setToolTipText("Add new server");
         exportPdf.setToolTipText("Export to pdf");
@@ -184,12 +184,12 @@ public class Fenetre extends JFrame{
             }
         });
 
-        findPathDN.addActionListener(evt -> {
-            SwingUtilities.invokeLater(() -> new FindPathModal(this, "Find shortest path to a Domain Name",true));
+        navigate.addActionListener(evt -> {
+            SwingUtilities.invokeLater(() -> new NavigateModal(this, String.format("%s navigator",selected.getIpAddress()), String.format("<html>Welcome to <strong>%s</strong> navigator</html>", selected.getIpAddress())));
         });
 
         findPathIP.addActionListener(evt -> {
-            SwingUtilities.invokeLater(() -> new FindPathModal(this, "Find shortest path to an IP adress",false));
+            SwingUtilities.invokeLater(() -> new FindPathModal(this, "Find shortest path to an IP adress"));
         });
 
         exportPdf.addActionListener(evt -> {
@@ -449,30 +449,33 @@ public class Fenetre extends JFrame{
             JOptionPane.showMessageDialog(null, String.format("The server %s is not reachable from %s",ipDest,ipSource),"Not reachable!",JOptionPane.INFORMATION_MESSAGE);
     }
 
-    public void showPathToDN(String ipSource, String domainName){
-        ArrayList<String> path = graphServer.getShortestPath(ipSource, dns.get(domainName));
-
-        graph.edges()
-             .forEach(edge -> edge.setAttribute("ui.class", ""));     
-
-        if(path.size() > 0){
-            for(int i=0; i<path.size()-1 ; i++){
-                if(graph.getEdge(String.format("%s->%s",path.get(i),path.get(i+1))) != null)
-                    graph.getEdge(String.format("%s->%s",path.get(i),path.get(i+1)))
-                         .setAttribute("ui.class", "marked");
-                else
-                    graph.getEdge(String.format("%s->%s",path.get(i+1),path.get(i)))
-                         .setAttribute("ui.class", "marked");
-
-                sleep(100);
+    public boolean navigatorSearch(String ipSource, String domainName){
+        if(dns.containsKey(domainName)){
+            ArrayList<String> path = graphServer.getShortestPath(ipSource, dns.get(domainName));
+    
+            graph.edges()
+                 .forEach(edge -> edge.setAttribute("ui.class", ""));     
+    
+            if(path.size() > 0){
+                /* for(int i=0; i<path.size()-1 ; i++){
+                    if(graph.getEdge(String.format("%s->%s",path.get(i),path.get(i+1))) != null)
+                        graph.getEdge(String.format("%s->%s",path.get(i),path.get(i+1)))
+                             .setAttribute("ui.class", "marked");
+                    else
+                        graph.getEdge(String.format("%s->%s",path.get(i+1),path.get(i)))
+                             .setAttribute("ui.class", "marked");
+    
+                    sleep(100);
+                }*/   
+                //JOptionPane.showMessageDialog(this, String.format("The nearest %s server is %s", domainName,path.getLast()),"Shortest Path",JOptionPane.INFORMATION_MESSAGE);
+                return true;
             }
 
-
-            JOptionPane.showMessageDialog(this, String.format("The nearest %s server is %s", domainName,path.getLast()),"Shortest Path",JOptionPane.INFORMATION_MESSAGE);
+            return false;
         }
 
         else
-            JOptionPane.showMessageDialog(null, String.format("The domain Name %s is not reachable from %s",domainName,ipSource),"Not Reachable",JOptionPane.INFORMATION_MESSAGE);
+            return false;
     }
 
 

@@ -68,7 +68,6 @@ public class GraphServer {
     
     public GraphServer(String filepath) throws IOException{
         if(filepath != null){
-
             BufferedReader  reader = new BufferedReader(new FileReader(filepath));
     
             String line;
@@ -76,7 +75,6 @@ public class GraphServer {
     
             nodes = new ArrayList<>();
           
-    
             while((line = reader.readLine()) != null){
                 if(t < n){
                     String[] splitted = line.split(" ");

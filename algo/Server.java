@@ -8,17 +8,32 @@ public class Server{
     private String domainName;
     private HashMap<Server, Integer> reachableServer;
     private boolean isUp;
+    private String htmlPageContent;
 
     public Server(String ipAddress, String domainName){
         this.ipAddress = ipAddress;
         this.domainName = domainName;
         this.isUp = true;
         this.reachableServer = new HashMap<>();
+        this.htmlPageContent =
+            "<!DOCTYPE html>"
+            +"<html>"
+            +  "<head>"
+            +     "<title>"+domainName+"</title>"
+            +  "</head>"
+            +  "<body>"
+            +     "<p>Welcome to <strong>"+domainName+"</strong> page!</p>"
+            +  "</body>"
+            +"</html>" ;
     }
 
     public String getIpAddress(){ return ipAddress; }
 
     public String getDomainName() { return domainName; }
+
+    public String getHtmlPageContent() { return htmlPageContent; }
+
+    public void setHtmlPageContent(String htmlDoc) { htmlPageContent = htmlDoc; }
 
     public boolean getIsUp() { return isUp; }
 
