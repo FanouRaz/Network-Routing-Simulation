@@ -1,7 +1,15 @@
 package algo;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
+import java.io.IOException;
+
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.InputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 
 public class Server{
     private String ipAddress;
@@ -9,6 +17,10 @@ public class Server{
     private HashMap<Server, Integer> reachableServer;
     private boolean isUp;
     private String htmlPageContent;
+    private Socket socket;
+    private OutputStream out;
+    private InputStream in;
+
 
     public Server(String ipAddress, String domainName){
         this.ipAddress = ipAddress;
@@ -24,7 +36,18 @@ public class Server{
             +  "<body>"
             +     "<p>Welcome to <strong>"+domainName+"</strong> page!</p>"
             +  "</body>"
-            +"</html>" ;
+            +"</html>" ; 
+        
+        try{
+            this.socket = new Socket("127.0.0.1",GraphServer.SOCKET_SERVER_PORT);
+            this.in = socket.getInputStream();
+            this.out = socket.getOutputStream();
+
+            //Informer le serveurSocket de l'adresse IP de ce serveur 
+            new PrintWriter(out,true).println(ipAddress);
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public String getIpAddress(){ return ipAddress; }
@@ -55,6 +78,10 @@ public class Server{
         return reachableServer.get(server);
     }
 
+    public InputStream getInputStream() { return in; }
+
+    public OutputStream getOutputStream() { return out; }
+
     public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
 
     public void setDomainName(String domainName) { this.domainName = domainName; }
@@ -64,6 +91,26 @@ public class Server{
     public void addServerReachable(Server server, Integer ttl) { reachableServer.put(server,ttl); }
 
     public void removeServerReachable(Server server) { reachableServer.remove(server); }
+
+    public void sendRequest(Server destServer,ArrayList<String> path){
+        try{
+            ObjectOutputStream destOut = new ObjectOutputStream(destServer.getOutputStream());
+            
+            destOut.writeObject(new Request(ipAddress, destServer.getIpAddress(),path));
+            destOut.flush();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+    }
+    
+    public void stop(){
+        try{
+            in.close();
+            out.close();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+    }
 
     public static boolean isIpAdress(String str){
         if(str.matches("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$")){

@@ -2,6 +2,10 @@ package gui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+
+import java.io.ObjectInputStream;
+import java.io.IOException;
+
 import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
@@ -10,6 +14,8 @@ import javax.swing.JDialog;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.JToolBar;
+
+import algo.Response;
 
 
 public class NavigateModal extends JDialog {
@@ -62,11 +68,25 @@ public class NavigateModal extends JDialog {
                     +  "</body>"
                     +"</html>" ;  
 
-                if(pathToSite != null)
-                    htmlDoc = parent.getGraphServer()
-                                           .findServerByIpAdress(pathToSite.getLast())
-                                           .orElse(null)
-                                           .getHtmlPageContent();
+                if(pathToSite != null){                    
+                    pathToSite.removeFirst();
+
+
+                    parent.getSelectedServer()
+                          .sendRequest(parent.getGraphServer()
+                                             .findServerByIpAdress(pathToSite.get(0))
+                                             .orElse(null), pathToSite);
+                    try{
+                        ObjectInputStream input = new ObjectInputStream(parent.getSelectedServer().getInputStream());   
+                        Response res =(Response) input.readObject();
+
+                        System.out.printf("[%s] Response Received: %s\n",res.getIpDest(), res);
+
+                        htmlDoc = res.getResponseBody();
+                    }catch(IOException | ClassNotFoundException e){
+                        e.printStackTrace();
+                    }
+                }
                 
                 page.setText(htmlDoc);
             }).start();

@@ -3,7 +3,6 @@ package algo;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
@@ -14,7 +13,6 @@ public class GraphServer {
     + "graph {"
     + "	canvas-color: white;  "
     + "	fill-mode: gradient-radial; "
-    //+ "	fill-color: white, #EEEEEE;"
     + "	padding: 60px; "
     + "}"
     + ""	
@@ -58,7 +56,9 @@ public class GraphServer {
     + " fill-color: grey;"
     + " fill-mode: plain;"
     + "}";
+
     public static final String URL_IMAGE = "assets/server.png";
+    public static final int SOCKET_SERVER_PORT = 3000; 
 
     private ArrayList<Server> nodes; 
 

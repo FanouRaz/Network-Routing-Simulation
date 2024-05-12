@@ -8,7 +8,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+
+import java.net.ServerSocket;
+import java.net.Socket;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -36,11 +42,14 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Image;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 
 import algo.GraphServer;
+import algo.Request;
+import algo.Response;
 import algo.Server;
 
 public class Fenetre extends JFrame{
@@ -54,7 +63,9 @@ public class Fenetre extends JFrame{
     private JPopupMenu popUpMenu;
     private JMenuItem startOrShutdown, removeServer, addEdge, navigate, findPathIP;
     private Server selected;
-    
+    private ServerSocket socketServer;
+    private HashMap<String, Socket> clientSockets;
+
     public Fenetre() throws IOException{
         init();
 
@@ -120,6 +131,12 @@ public class Fenetre extends JFrame{
         dns = new HashMap<>();
         graphServer = new GraphServer(new ArrayList<>());
 
+        try{
+            socketServer = new ServerSocket(GraphServer.SOCKET_SERVER_PORT);
+
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
 
         System.setProperty("org.graphstream.ui", "swing");
         graph.setAttribute("ui.stylesheet", GraphServer.styleSheet); 
@@ -128,6 +145,9 @@ public class Fenetre extends JFrame{
         pipeIn.addAttributeSink( graph );
         pipeIn.addViewerListener( new GraphViewerListener(this));
         pipeIn.pump();
+
+        clientSockets = new HashMap<>();
+        handleConnections();
     }
 
     /*
@@ -302,8 +322,11 @@ public class Fenetre extends JFrame{
             graph.edges()
                  .forEach(System.out::println);
             
-            graphServer = null;
+            graphServer.getNodes()
+                       .removeAll(graphServer.getNodes());
             
+            System.out.println(graphServer.getNodes());
+
             dns = new HashMap<>();
         }
     }
@@ -342,7 +365,7 @@ public class Fenetre extends JFrame{
         destServer.addServerReachable(sourceServer,weight);
         sourceServer.addServerReachable(destServer, weight);
 
-        graph.addEdge(String.format("%s->%s",sourceServer,destServer), graph.getNode(ipSource), graph.getNode(ipDest))
+        graph.addEdge(String.format("%s->%s",ipSource,ipDest), graph.getNode(ipSource), graph.getNode(ipDest))
              .setAttribute("ui.label", weight); 
     }
 
@@ -440,8 +463,6 @@ public class Fenetre extends JFrame{
                 else
                     graph.getEdge(String.format("%s->%s",path.get(i+1),path.get(i)))
                          .setAttribute("ui.class", "marked");
-
-                sleep(100);
             }
         }
 
@@ -470,7 +491,9 @@ public class Fenetre extends JFrame{
         return null;
     }
 
-
+    /*
+     * Sauvegarder l'état du graphe actuel 
+     */
     public void save(String path) throws IOException{
         PrintWriter out = new PrintWriter(new File(path));
         
@@ -487,4 +510,86 @@ public class Fenetre extends JFrame{
     }
 
     public GraphServer getGraphServer() { return graphServer; }
+
+    public Socket getClientSocket(String ip) { return clientSockets.get(ip); }
+
+    public HashMap<String, Socket> getClientSockets() { return clientSockets; }
+
+    //Connecter les sockets de chaque instance de Server au socketServer
+    public void handleConnections(){
+        new Thread(()->{
+            try{
+                while(true){
+                    Socket clientSocket = socketServer.accept();
+                   
+                    handleRequest(clientSocket);
+                }
+            }catch(IOException e){}
+        }).start();
+    }
+
+    public void handleRequest(Socket socket){
+        new Thread(() -> {
+            try{
+                BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                
+                String ip = input.readLine();
+                System.out.printf("New server %s\n",ip);
+                
+                clientSockets.put(ip, socket);
+                
+                ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+
+                while(true){
+                    Request req = (Request) in.readObject();
+
+                    System.out.printf("[%s] Request received: %s\n", req.getIpDest(), req);
+
+                    try{
+                        ObjectOutputStream out = new ObjectOutputStream(clientSockets.get(req.getIpSource()).getOutputStream());
+                        
+                        if(req.getHeader().size() == 1){
+                            String destHtml = graphServer.findServerByIpAdress(req.getIpDest())
+                                                     .orElse(null)
+                                                     .getHtmlPageContent();
+                            
+                            out.writeObject(new Response(req.getIpDest(), req.getIpSource(), req.getHeader(), destHtml));
+                            out.flush();
+                        }
+                        else{
+                            String currentIp = req.getHeader()
+                               .removeFirst();
+                            
+                            Server nextServer = graphServer.findServerByIpAdress(req.getHeader().getFirst())
+                                                           .orElse(null);
+                                        
+                            Server currentServer = graphServer.findServerByIpAdress(currentIp)
+                                                              .orElse(null);
+                            
+                            currentServer.sendRequest(nextServer, req.getHeader());
+
+                            ObjectInputStream clientInput = new ObjectInputStream(currentServer.getInputStream());
+
+                            Response res = (Response) clientInput.readObject();
+                            
+                            System.out.printf("[%s] Response Received: %s\n",currentIp,res);
+                            res.setIpSource(currentIp);
+
+                            res.setIpDest(req.getIpSource());
+
+                            res.getHeader()
+                               .addFirst(currentIp);
+
+                            out.writeObject(res);
+                            out.flush();
+                        }
+                    }catch(IOException e){
+                        e.printStackTrace();
+                    }
+                }
+            }catch(IOException | ClassNotFoundException e){
+                e.printStackTrace();
+            }
+        }).start();
+    }
 }
